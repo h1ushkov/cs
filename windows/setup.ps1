@@ -1,4 +1,4 @@
-﻿# Function to check and start the service if it's not running
+# Function to check and start the service if it's not running
 function Ensure-ServiceRunning {
     param (
         [string]$serviceName
