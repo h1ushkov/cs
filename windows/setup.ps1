@@ -1,4 +1,4 @@
-﻿# Function to check and start the service if it's not running
+# Function to check and start the service if it's not running
 function Ensure-ServiceRunning {
     param (
         [string]$serviceName
@@ -31,50 +31,46 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit
 }
 
-# Створення адміністративного облікового запису
+# Create an administrative account
 $adminUsername = "AdminUAC"
 $adminPassword = ConvertTo-SecureString "rGotOroA" -AsPlainText -Force
 if (-not (Get-LocalUser -Name $adminUsername -ErrorAction SilentlyContinue)) {
     New-LocalUser -Name $adminUsername -Password $adminPassword -Description "Admin Account" -PasswordNeverExpires | Out-Null
     Add-LocalGroupMember -Group "Administrators" -Member $adminUsername | Out-Null
-    Write-Host "Адміністративний обліковий запис $adminUsername створено успішно."
+    Write-Host "Administrative account $adminUsername created successfully."
 } else {
-    Write-Host "Адміністративний обліковий запис $adminUsername вже існує."
+    Write-Host "Administrative account $adminUsername already exists."
 }
 
-# Видалення всіх інших користувачів з групи 'Administrators', окрім 'AdminUAC' та відключених користувачів
+# Remove all other users from the 'Administrators' group, except 'AdminUAC' and disabled users
 $adminGroup = Get-LocalGroupMember -Group "Administrators" | Where-Object {
     $_.Name -ne $adminUsername -and $_.Name -ne "Administrator"
 }
 
 foreach ($user in $adminGroup) {
-    # Використовуємо тільки короткі імена користувачів
     $username = $user.Name.Split('\')[-1]
-    
-    # Отримуємо деталі користувача
     $localUser = Get-LocalUser -Name $username -ErrorAction SilentlyContinue
-    
-    # Перевіряємо, чи користувач не відключений і не AdminUAC
+
     if ($localUser -and $localUser.Enabled -eq $true -and $localUser.Name -ne $adminUsername) {
         Remove-LocalGroupMember -Group "Administrators" -Member $username -ErrorAction SilentlyContinue
         Add-LocalGroupMember -Group "Users" -Member $username -ErrorAction SilentlyContinue
-        Write-Host "Користувача $($username) було переведено з групи 'Administrators' до групи 'Users'."
+        Write-Host "User $($username) has been moved from 'Administrators' to 'Users'."
     }
 }
-Write-Host "Усі активні користувачі, окрім $adminUsername та 'Administrator', були переведені до групи 'Users'."
+Write-Host "All active users, except $adminUsername and 'Administrator', have been moved to the 'Users' group."
 
-# Налаштування UAC для вимоги введення пароля адміністратора
+# Set UAC to require administrator password input
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v ConsentPromptBehaviorAdmin /t REG_DWORD /d 1 /f
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v ConsentPromptBehaviorUser /t REG_DWORD /d 3 /f
 
-Write-Host "UAC налаштовано: вимога введення пароля адміністратора при підвищенні привілеїв."
+Write-Host "UAC configured to require administrator password on elevation."
 
-# Вимкнення гостевого облікового запису
+# Disable guest account
 net user guest /active:no
-Write-Host "Гостевий обліковий запис вимкнено успішно."
+Write-Host "Guest account successfully disabled."
 
-# Очищення історії команд PowerShell
+# Clear PowerShell command history
 Clear-History
-Write-Host "Історію команд PowerShell очищено успішно."
+Write-Host "PowerShell command history cleared successfully."
 
-Write-Host "Налаштування завершено успішно!"
+Write-Host "Setup completed successfully!"
