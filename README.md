@@ -1,6 +1,8 @@
 # cs
 Bunch of cybersecurity scrips and other stuff
 
+# SETUP
+
 Set-ExecutionPolicy Bypass -Scope Process
 
 $scriptUrl = "https://raw.githubusercontent.com/h1ushkov/cs/main/windows/setup.ps1"
@@ -11,6 +13,7 @@ Invoke-WebRequest -Uri $scriptUrl -OutFile "$env:TEMP\setup.ps1"
 # Виконуємо завантажений скрипт
 & "$env:TEMP\setup.ps1"
 
+# REVERT
 
 Set-ExecutionPolicy Bypass -Scope Process
 
